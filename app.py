@@ -2,9 +2,15 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
+
+def create_neuronpedia_link(feature_index):
+    base_url = "https://www.neuronpedia.org/gemma-2-2b/20-gemmascope-res-16k/"
+    return f"{base_url}{feature_index}"
+
+
 df = pd.read_csv('feature_analysis.csv')
 
-df_grouped = df.groupby(['phrase', 'sub_component'], as_index=False).agg({'total_activation': 'mean'})
+df_grouped = df.groupby(['phrase', 'sub_component'], as_index=False).agg({'total_activation': 'mean', 'feature_index': 'first'})
 
 st.title("Gemma Scope SAE Feature Analysis")
 
@@ -18,6 +24,10 @@ selected_phrase = st.selectbox("Select an SAE feature", df_grouped['phrase'].uni
 
 filtered_df = df_grouped[df_grouped['phrase'] == selected_phrase]
 
+feature_index = filtered_df['feature_index'].unique()[0]
+neuronpedia_link = create_neuronpedia_link(feature_index)
+st.markdown(f"[View Neuronpedia Dashboard for this feature]({neuronpedia_link})")
+
 if filtered_df['total_activation'].sum() == 0:
     st.write(f"None of the subcomponents for '{selected_phrase}' were activated.")
 else:
@@ -25,7 +35,7 @@ else:
         filtered_df,
         x='sub_component',
         y='total_activation',
-        title=f"Mean Activation for {selected_phrase}",
+        title=f"Mean Activation by sub-component for this feature",
         labels={'total_activation': 'Mean Activation', 'sub_component': 'Subcomponent'},
         height=600
     )
